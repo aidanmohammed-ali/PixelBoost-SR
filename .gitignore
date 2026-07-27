@@ -1,0 +1,58 @@
+# ==========================================
+# Python & Virtual Environments
+# ==========================================
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# ==========================================
+# Datasets & Temporary Images
+# ==========================================
+data/
+datasets/
+*.zip
+*.tar.gz
+*.png
+*.jpg
+*.jpeg
+
+# ==========================================
+# Trained Model Checkpoints & Export Files
+# ==========================================
+*.pth
+*.pt
+*.onnx
+*.engine
+*.bin
+*.weights
+*.trt
+checkpoints/
+runs/
+wandb/
+
+# ==========================================
+# C++ & Build Artifacts (CMake / TensorRT)
+# ==========================================
+build/
+bin/
+lib/
+*.out
+*.app
+CMakeCache.txt
+CMakeFiles/
+Makefile
+compile_commands.json
+
+# ==========================================
+# IDE & System Files
+# ==========================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
