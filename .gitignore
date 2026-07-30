@@ -32,6 +32,9 @@ datasets/
 *.bin
 *.weights
 *.trt
+*.csv
+*.csv#
+*.txt
 checkpoints/
 runs/
 wandb/
