@@ -28,6 +28,7 @@ datasets/
 *.pth
 *.pt
 *.onnx
+*.data
 *.engine
 *.bin
 *.weights
