@@ -35,7 +35,7 @@ datasets/
 *.trt
 *.csv
 *.csv#
-*.txt
+test_summary.txt
 checkpoints/
 runs/
 wandb/
