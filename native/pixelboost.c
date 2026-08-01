@@ -218,6 +218,152 @@ int pb_upscale_image(PixelBoostEngine *engine,
 }
 
 /**
+ * @brief Helper to extract a tile with zero-padding.
+ * @param src Pointer to the full master RGB image buffer.
+ * @param img_w Master image width in pixels.
+ * @param img_h Master image height in pixels.
+ * @param x0 Left edge starting coordinate of the tile in the master image (may be negative).
+ * @param y0 Top edge starting coordinate of the tile in the master image (may be negative).
+ * @param tile_w Padded width of the tile to extract.
+ * @param tile_h Padded height of the tile to extract.
+ * @param tile_out Output buffer pre-allocated to size (tile_w * tile_h * 3).
+ */
+static void extract_tile(const uint8_t *src, int img_w, int img_h,
+                         int x0, int y0, int tile_w, int tile_h,
+                         uint8_t *tile_out) {
+    for (int y = 0; y < tile_h; ++y) {
+        int src_y = y0 + y;
+        if (src_y < 0) {
+            src_y = 0;
+        }
+        if (src_y >= img_h) {
+            src_y = img_h - 1;
+        }
+        
+        for (int x = 0; x < tile_w; ++x) {
+            int src_x = x0 + x;
+            if (src_x < 0) {
+                src_x = 0;
+            }
+            if (src_x >= img_w) {
+                src_x = img_w - 1;
+            }
+            
+            int src_idx = (src_y * img_w + src_x) * 3;
+            int dst_idx = (y * tile_w + x) * 3;
+            memcpy(&tile_out[dst_idx], &src[src_idx], 3);
+        }
+    }
+}
+
+/**
+ * @brief Helper to copy the valid inner core of an upscaled tile to the master output.
+ * @param tile_sr Pointer to the upscaled RGB tile buffer.
+ * @param tile_sr_w Width of the upscaled tile buffer in pixels.
+ * @param crop_x Horizontal crop offset within tile_sr to skip edge padding.
+ * @param crop_y Vertical crop offset within tile_sr to skip edge padding.
+ * @param crop_w Width of the core region to copy.
+ * @param crop_h Height of the core region to copy.
+ * @param master_out Pointer to the master upscaled output buffer.
+ * @param master_w Width of the master output buffer in pixels.
+ * @param out_x0 Target horizontal destination coordinate in master_out.
+ * @param out_y0 Target vertical destination coordinate in master_out.
+ */
+static void copy_tile_to_master(const uint8_t *tile_sr, int tile_sr_w,
+                                int crop_x, int crop_y, int crop_w, int crop_h,
+                                uint8_t *master_out, int master_w,
+                                int out_x0, int out_y0) {
+    for (int y = 0; y < crop_h; ++y) {
+        int dst_y = out_y0 + y;
+        int src_y = crop_y + y;
+        for (int x = 0; x < crop_w; ++x) {
+            int dst_x = out_x0 + x;
+            int src_x = crop_x + x;
+            
+            int src_idx = (src_y * tile_sr_w + src_x) * 3;
+            int dst_idx = (dst_y * master_w + dst_x) * 3;
+            memcpy(&master_out[dst_idx], &tile_sr[src_idx], 3);
+        }
+    }
+}
+
+/**
+ * @brief Upscales a raw RGB image buffer by 4x using a sliding-window tile grid.
+ * @details Divides large images into padded tiles to prevent high memory allocation
+ *          bursts and Out-Of-Memory (OOM) faults. Edge overlaps are cropped post-inference
+ *          to eliminate seam boundary artifacts.
+ * @param engine Active engine handle.
+ * @param input_rgb Pointer to raw byte array [R,G,B, R,G,B, ...] scaled 0-255.
+ * @param width Input image width in pixels.
+ * @param height Input image height in pixels.
+ * @param output_rgb Buffer pre-allocated to size (width * 4 * height * 4 * 3).
+ * @param tile_size Core dimension of square tiles in pixels (e.g., 256).
+ * @param overlap Border padding in pixels to absorb tile boundary artifacts (e.g., 16).
+ * @retval 0 on success, non-zero on failure.
+ */
+int pb_upscale_image_tiled(PixelBoostEngine *engine,
+                           const uint8_t *input_rgb,
+                           int width,
+                           int height,
+                           uint8_t *output_rgb,
+                           int tile_size,
+                           int overlap) {
+    if (!engine || !input_rgb || !output_rgb) {
+        return -1;
+    }
+    
+    const int padded_tile_w = tile_size + 2 * overlap;
+    const int padded_tile_h = tile_size + 2 * overlap;
+    
+    // Allocate temporary buffers for a single padded tile (input and 4x upscaled output)
+    uint8_t *tile_in = (uint8_t*)malloc((size_t)padded_tile_w * padded_tile_h * 3);
+    uint8_t *tile_out = (uint8_t *)malloc((size_t)padded_tile_w * 4 * padded_tile_h * 4 * 3);
+    
+    if (!tile_in || !tile_out) {
+        free(tile_in);
+        free(tile_out);
+        return 1;
+    }
+    
+    for (int y = 0; y < height; y += tile_size) {
+        for (int x = 0; x < width; x += tile_size) {
+            int cur_tile_w = (x + tile_size > width) ? (width - x) : tile_size;
+            int cur_tile_h = (y + tile_size > height) ? (height - y) : tile_size;
+            
+            int x0 = x - overlap;
+            int y0 = y - overlap;
+            int actual_padded_w = cur_tile_w + 2 * overlap;
+            int actual_padded_h = cur_tile_h + 2 * overlap;
+            
+            // Extract tile with overlap padding
+            extract_tile(input_rgb, width, height, x0, y0, actual_padded_w, actual_padded_h, tile_in);
+            
+            // Run inference on single tile
+            if (pb_upscale_image(engine, tile_in, actual_padded_w, actual_padded_h, tile_out) != 0) {
+                free(tile_in);
+                free(tile_out);
+                return 1;
+            }
+            
+            // Crop border padding artifacts and copy core into master output canvas
+            int crop_x = overlap * 4;
+            int crop_y = overlap * 4;
+            int crop_w = cur_tile_w * 4;
+            int crop_h = cur_tile_h * 4;
+            
+            copy_tile_to_master(tile_out, actual_padded_w * 4,
+                                crop_x, crop_y, crop_w, crop_h,
+                                output_rgb, width * 4,
+                                x * 4, y * 4);
+        }
+    }
+    
+    free(tile_in);
+    free(tile_out);
+    return 0;
+}
+
+/**
  * @brief Destroys the engine handle and releases memory resources.
  * @param engine Engine handle to destroy.
  */
