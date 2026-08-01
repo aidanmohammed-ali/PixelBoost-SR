@@ -49,4 +49,4 @@ Below is the stage-by-stage execution latency for low-resolution and high-resolu
    By chunking the image into square $256 \times 256$ tiles with $16\text{px}$ overlap borders, peak memory allocation remains constant at **~4 MB** regardless of how large the input image is ($2K \to 8K \to 16K$).
 
 3. **Latency Overhead Trade-off:**
-   Tiled grid execution introduces a small **$7\% \text{ to } 9\%$ computation overhead** due to redundant inference over border overlap zones. This overlap is required to prevent edge convolution seam artifacts.
+   Tiled grid execution introduces a **less than 10 percent computation overhead** due to redundant inference over border overlap zones. This overlap is required to prevent edge convolution seam artifacts.
