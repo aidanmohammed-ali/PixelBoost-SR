@@ -62,3 +62,50 @@ PixelBoost-SR is optimized for low-memory CPU execution.
 * **Dynamic INT8 Quantization:** Compresses model weights by **73.9%** ($3.40\text{ MB} \to 0.89\text{ MB}$) and speeds up heavy $1920 \times 1280$ grid rendering by **~14.5% (~4.7 seconds saved)**.
 
 **[Read the Full Benchmark Report & Quality Previews (BENCHMARKS.md)](BENCHMARKS.md)**
+
+## Citations & Acknowledgements
+
+### Model Training Datasets
+
+The neural network model weights in PixelBoost-SR were trained using datasets by the NTIRE and PIRM Super-Resolution Challenges:
+
+```bibtex
+@InProceedings{Agustsson_2017_CVPR_Workshops,
+  author    = {Agustsson, Eirikur and Timofte, Radu},
+  title     = {NTIRE 2017 Challenge on Single Image Super-Resolution: Dataset and Study},
+  booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+  month     = {July},
+  year      = {2017}
+}
+
+@InProceedings{Timofte_2017_CVPR_Workshops,
+  author    = {Timofte, Radu and Agustsson, Eirikur and Van Gool, Luc and Yang, Ming-Hsuan and Zhang, Lei and Lim, Bee and others},
+  title     = {NTIRE 2017 Challenge on Single Image Super-Resolution: Methods and Results},
+  booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+  month     = {July},
+  year      = {2017}
+}
+
+@InProceedings{Timofte_2018_CVPR_Workshops,
+  author    = {Timofte, Radu and Gu, Shuhang and Wu, Jiqing and Van Gool, Luc and Zhang, Lei and Yang, Ming-Hsuan and Haris, Muhammad and others},
+  title     = {NTIRE 2018 Challenge on Single Image Super-Resolution: Methods and Results},
+  booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+  month     = {June},
+  year      = {2018}
+}
+
+@InProceedings{Ignatov_2018_ECCV_Workshops,
+  author    = {Ignatov, Andrey and Timofte, Radu and others},
+  title     = {PIRM challenge on perceptual image enhancement on smartphones: report},
+  booktitle = {European Conference on Computer Vision (ECCV) Workshops},
+  month     = {January},
+  year      = {2019}
+}
+```
+
+### Sample Image Attributions
+
+The benchmark and sample preview images are sourced under the [Unsplash License](https://unsplash.com/license):
+
+* **Low-Res Test Image (`lowres.jpg`):** *"Underwater photography of red fish"* on [Unsplash](https://unsplash.com/photos/underwater-photography-of-red-fish-K2RH1QZdLF4).
+* **High-Res Test Image (`highres.jpg`):** *"Times Square, New York during daytime"* on [Unsplash](https://unsplash.com/photos/time-square-new-york-during-daytime-TaCk3NspYe0).
