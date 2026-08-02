@@ -53,3 +53,12 @@ PixelBoost-SR/
     ├── train.py                    # Model training script
     └── export_onnx.py              # PyTorch to ONNX model exporter
 ```
+
+## Performance & Benchmarks
+
+PixelBoost-SR is optimized for low-memory CPU execution.
+
+* **Memory-Safe Tiled Grid Execution:** Restricts peak RAM allocation to **~4 MB**, preventing OS Out-Of-Memory (`SIGKILL`) crashes on $8\text{K}+$ canvas outputs.
+* **Dynamic INT8 Quantization:** Compresses model weights by **73.9%** ($3.40\text{ MB} \to 0.89\text{ MB}$) and speeds up heavy $1920 \times 1280$ grid rendering by **~14.5% (~4.7 seconds saved)**.
+
+**[Read the Full Benchmark Report & Quality Previews (BENCHMARKS.md)](BENCHMARKS.md)**
