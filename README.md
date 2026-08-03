@@ -1,12 +1,13 @@
 # PixelBoost-SR
 
-A lightweight, high-performance C/C++ inference engine for real-time Super-Resolution image upscaling powered by ONNX Runtime.
+A lightweight, high-performance C/C++ inference engine for real-time Super-Resolution image upscaling powered by ONNX Runtime, featuring zero-copy Python `ctypes` bindings.
 
 ## Features
 - **Native C Core:** Low-overhead execution wrapper with zero complex language runtime dependencies.
+- **Python Ctypes Bindings:** Native dynamic linking (`libpixelboost.so` / `pixelboost.dll`) providing a high-level Python API with PIL and NumPy support.
 - **Cross-Platform:** Built using CMake with dynamic dependency resolution across Linux, macOS, and Windows.
 - **Hardware Fallback:** Automatic detection of CUDA acceleration with thread-parallel CPU execution fallback.
-- **RAII C++ Test Harness:** Included test driver for $4\times$ image upscaling.
+- **Memory-Safe Tiling:** Sliding-window tiled grid inference with edge overlap cropping to prevent seam artifacts and Out-Of-Memory (OOM) faults.
 
 ## Quick Start
 
@@ -25,8 +26,28 @@ cmake -j
 cd ..
 ```
 
-### 3. Run $4\times$ Upscaling Test
-Pass the target ONNX model, input image, desired output path (without extension), and upscale mode. For example:
+### 3. Usage & Execution
+
+#### Option A: Python API (Ctypes Bindings)
+PixelBoost-SR exposes a Python wrapper around the native C library in `src/pixelboost.py`:
+```python
+import src.pixelboost as PB
+
+# Initialise engine with INT8 quantised ONNX model
+engine = PB.PixelBoost("models/super_resolution_int8.onnx")
+
+# Execute 4x upscaling on image file path (returns PIL Image)
+upscaled_img = engine.upscale("sample_imgs/lowres.jpg", tiled=True)
+upscaled_img.save("output_4x.png")
+```
+
+A Python Test Harness is provided and can be used as follows:
+```bash
+python test_python.py
+```
+
+#### Option B: C++ Executable Test Harness
+Pass the target ONNX model, input image, desired output path (without extension), and upscale mode (tiled, full or all). For example:
 ```bash
 ./lib/test_pixelboost models/super_resolution.onnx input.jpg output_4x tiled
 ```
@@ -37,6 +58,7 @@ Pass the target ONNX model, input image, desired output path (without extension)
 PixelBoost-SR/
 ├── CMakeLists.txt                  # Cross-platform CMake build configuration
 ├── test_main.cpp                   # C++ integration test harness
+├── test_python.py                  # Python ctypes integration test harness
 ├── README.md                       # Project documentation
 ├── BENCHMARKS.md                   # Performance analysis
 │
@@ -56,7 +78,8 @@ PixelBoost-SR/
 │   ├── model.py                    # Super-Resolution neural network architecture
 │   ├── train.py                    # Model training script
 │   ├── export_onnx.py              # PyTorch to ONNX model exporter
-│   └── quantise.py                 # Quantisation to INT8 for ONNX model
+│   ├── quantise.py                 # Quantisation to INT8 for ONNX model
+│   └── pixelboost.py               # Native C engine ctypes wrapper
 │
 └── sample_imgs/                    # Example images before and after upscaling
 ```
