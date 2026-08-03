@@ -49,7 +49,7 @@ private:
  */
 int main(int argc, char** argv) {
     if (argc < 3) {
-        std::cout << "Usage: " << argv[0] << "<path_to_onnx_model> <path_to_input_images> [output_path.png] [mode: all|tiled|full]\n";
+        std::cout << "Usage: " << argv[0] << " <path_to_onnx_model> <path_to_input_images> [output_path.png] [mode: all|tiled|full]\n";
         return 1;
     }
     
