@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
 
+# Set default output directory for compiled dynamic libraries (.so / .dll)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
+
 # -----------------------------------------------------------------------------
 # 1. Download stb image header library
 # -----------------------------------------------------------------------------
@@ -75,7 +79,34 @@ target_include_directories(pixelboost
 target_link_libraries(pixelboost PRIVATE ${ONNXRUNTIME_LIBRARY})
 
 # -----------------------------------------------------------------------------
-# 4. C++ Test Executable
+# 4. Native PixelBoost Shared Library (.so on Linux/macOS, .dll on Windows)
+# -----------------------------------------------------------------------------
+
+add_library(pixelboost_shared SHARED native/pixelboost.c)
+
+# Keep the output file name as libpixelboost.so / pixelboost.dll (instead of libpixelboost_shared.so)
+set_target_properties(pixelboost_shared PROPERTIES OUTPUT_NAME "pixelboost")
+
+# Instruct GCC/Clang to export all C function symbols automatically without header edits
+if(NOT WIN32)
+    target_compile_options(pixelboost_shared PRIVATE -fvisibility=default)
+endif()
+
+# On Windows, tell the compiler to export all symbols automatically without __declspec(dllexport)
+if(WIN32)
+    set_target_properties(pixelboost_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+
+target_include_directories(pixelboost_shared
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${ONNXRUNTIME_INCLUDE_DIR}
+)
+
+target_link_libraries(pixelboost_shared PRIVATE ${ONNXRUNTIME_LIBRARY})
+
+# -----------------------------------------------------------------------------
+# 5. C++ Test Executable
 # -----------------------------------------------------------------------------
 add_executable(test_pixelboost test_main.cpp)
 
