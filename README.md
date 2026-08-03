@@ -19,14 +19,16 @@ cd PixelBoost-SR
 ### 2. Build the Project
 CMake will automatically fetch all necessary dependencies (`stb` headers and ONNX Runtime SDK):
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+mkdir build && cd build
+cmake ..
+cmake -j
+cd ..
 ```
 
 ### 3. Run $4\times$ Upscaling Test
-Pass the target ONNX model, input image, and desired output path:
+Pass the target ONNX model, input image, desired output path (without extension), and upscale mode. For example:
 ```bash
-./build/test_pixelboost models/super_resolution.onnx input.jpg output_4x.png
+./lib/test_pixelboost models/super_resolution.onnx input.jpg output_4x tiled
 ```
 
 ## Project Structure
@@ -36,6 +38,7 @@ PixelBoost-SR/
 ├── CMakeLists.txt                  # Cross-platform CMake build configuration
 ├── test_main.cpp                   # C++ integration test harness
 ├── README.md                       # Project documentation
+├── BENCHMARKS.md                   # Performance analysis
 │
 ├── include/
 │   └── pixelboost.h                # Public C API header
@@ -45,13 +48,17 @@ PixelBoost-SR/
 │
 ├── models/
 │   ├── super_resolution.onnx       # Exported 4x ONNX model
-│   └── super_resolution.onnx.data
+│   ├── super_resolution.onnx.data
+│   └── super_resolution_int8.onnx  # Quantised ONNX model
 │
-└── src/                            # PyTorch training & export pipeline
-    ├── dataset.py                  # Custom image dataset loaders
-    ├── model.py                    # Super-Resolution neural network architecture
-    ├── train.py                    # Model training script
-    └── export_onnx.py              # PyTorch to ONNX model exporter
+├── src/                            # PyTorch training & export pipeline
+│   ├── dataset.py                  # Custom image dataset loaders
+│   ├── model.py                    # Super-Resolution neural network architecture
+│   ├── train.py                    # Model training script
+│   ├── export_onnx.py              # PyTorch to ONNX model exporter
+│   └── quantise.py                 # Quantisation to INT8 for ONNX model
+│
+└── sample_imgs/                    # Example images before and after upscaling
 ```
 
 ## Performance & Benchmarks
